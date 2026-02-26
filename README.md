@@ -1,2 +1,911 @@
-# steel-chess-tour
-Manual torneo ajedrez
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Steel Learning Chess Tour</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Josefin+Sans:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --gold-dim: #8a6f30;
+    --black: #0a0a0a;
+    --dark: #111111;
+    --dark2: #1a1a1a;
+    --dark3: #222222;
+    --white: #f5f0e8;
+    --white-dim: #c8c0b0;
+    --accent: #d4af6a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Josefin Sans', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+  }
+
+  /* CHESS PATTERN BACKGROUND */
+  .chess-bg {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    opacity: 0.025;
+    background-image:
+      repeating-conic-gradient(#fff 0% 25%, transparent 0% 50%);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* HERO */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 20px;
+    overflow: hidden;
+    z-index: 1;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(201,168,76,0.08) 0%, transparent 70%);
+  }
+
+  .hero-piece {
+    font-size: 7rem;
+    line-height: 1;
+    opacity: 0.15;
+    position: absolute;
+    animation: float 8s ease-in-out infinite;
+    user-select: none;
+  }
+  .hero-piece:nth-child(1) { top: 8%; left: 5%; font-size: 5rem; animation-delay: 0s; }
+  .hero-piece:nth-child(2) { top: 15%; right: 8%; font-size: 4rem; animation-delay: 2s; }
+  .hero-piece:nth-child(3) { bottom: 20%; left: 12%; font-size: 6rem; animation-delay: 4s; }
+  .hero-piece:nth-child(4) { bottom: 10%; right: 5%; font-size: 3.5rem; animation-delay: 1s; }
+  .hero-piece:nth-child(5) { top: 50%; left: 2%; font-size: 3rem; animation-delay: 3s; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    33% { transform: translateY(-15px) rotate(3deg); }
+    66% { transform: translateY(-8px) rotate(-2deg); }
+  }
+
+  .eyebrow {
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 28px;
+    opacity: 0;
+    animation: fadeUp 1s ease forwards 0.3s;
+  }
+
+  .hero-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(3.5rem, 9vw, 8rem);
+    font-weight: 300;
+    line-height: 0.95;
+    letter-spacing: -0.01em;
+    opacity: 0;
+    animation: fadeUp 1.2s ease forwards 0.5s;
+  }
+
+  .hero-title span {
+    display: block;
+    color: var(--gold);
+    font-style: italic;
+    font-size: clamp(2.5rem, 7vw, 6rem);
+  }
+
+  .hero-divider {
+    width: 80px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 36px auto;
+    opacity: 0;
+    animation: fadeUp 1s ease forwards 0.8s;
+  }
+
+  .hero-subtitle {
+    font-size: 0.75rem;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--white-dim);
+    opacity: 0;
+    animation: fadeUp 1s ease forwards 1s;
+  }
+
+  .hero-badges {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 48px;
+    opacity: 0;
+    animation: fadeUp 1s ease forwards 1.2s;
+  }
+
+  .badge {
+    border: 1px solid rgba(201,168,76,0.4);
+    padding: 8px 20px;
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold);
+    backdrop-filter: blur(4px);
+    background: rgba(201,168,76,0.04);
+    transition: all 0.3s ease;
+  }
+
+  .badge:hover {
+    background: rgba(201,168,76,0.12);
+    border-color: var(--gold);
+  }
+
+  .scroll-hint {
+    position: absolute;
+    bottom: 36px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    animation: fadeUp 1s ease forwards 1.5s;
+  }
+
+  .scroll-line {
+    width: 1px;
+    height: 50px;
+    background: linear-gradient(180deg, var(--gold), transparent);
+    animation: scrollPulse 2s ease infinite;
+  }
+
+  @keyframes scrollPulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* SECTIONS */
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  section {
+    padding: 100px 0;
+    position: relative;
+  }
+
+  .section-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .section-label::before {
+    content: '';
+    display: block;
+    width: 30px;
+    height: 1px;
+    background: var(--gold);
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2.2rem, 5vw, 4rem);
+    font-weight: 300;
+    line-height: 1.1;
+    margin-bottom: 40px;
+    color: var(--white);
+  }
+
+  .section-title em {
+    color: var(--gold);
+    font-style: italic;
+  }
+
+  .prose {
+    font-size: 0.95rem;
+    line-height: 1.9;
+    color: var(--white-dim);
+    max-width: 680px;
+  }
+
+  .prose + .prose {
+    margin-top: 20px;
+  }
+
+  /* DIVIDERS */
+  .hr-gold {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(201,168,76,0.3), transparent);
+    margin: 0;
+  }
+
+  /* OBJECTIVES GRID */
+  .obj-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 2px;
+    margin-top: 48px;
+  }
+
+  .obj-card {
+    background: var(--dark2);
+    padding: 36px 28px;
+    border: 1px solid rgba(255,255,255,0.04);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s ease;
+  }
+
+  .obj-card:hover {
+    background: var(--dark3);
+    border-color: rgba(201,168,76,0.25);
+  }
+
+  .obj-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px;
+    height: 0;
+    background: var(--gold);
+    transition: height 0.4s ease;
+  }
+
+  .obj-card:hover::before { height: 100%; }
+
+  .obj-icon {
+    font-size: 1.8rem;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  .obj-card p {
+    font-size: 0.85rem;
+    line-height: 1.8;
+    color: var(--white-dim);
+  }
+
+  /* SKILLS LIST */
+  .skills-list {
+    list-style: none;
+    margin-top: 32px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+  }
+
+  .skills-list li {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 24px;
+    background: rgba(201,168,76,0.04);
+    border: 1px solid rgba(201,168,76,0.12);
+    font-size: 0.82rem;
+    letter-spacing: 0.05em;
+    transition: all 0.3s ease;
+  }
+
+  .skills-list li:hover {
+    background: rgba(201,168,76,0.09);
+    border-color: rgba(201,168,76,0.3);
+    transform: translateX(4px);
+  }
+
+  .skills-list li::before {
+    content: '♟';
+    color: var(--gold);
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+
+  /* INFO CARDS */
+  .info-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 2px;
+    margin-top: 48px;
+  }
+
+  .info-card {
+    background: var(--dark2);
+    border: 1px solid rgba(255,255,255,0.04);
+    padding: 32px 24px;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+
+  .info-card:hover {
+    background: var(--dark3);
+    border-color: rgba(201,168,76,0.2);
+  }
+
+  .info-card .value {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.4rem;
+    font-weight: 300;
+    color: var(--gold);
+    display: block;
+    line-height: 1;
+    margin-bottom: 10px;
+  }
+
+  .info-card .label {
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--white-dim);
+  }
+
+  /* ROLES */
+  .roles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 2px;
+    margin-top: 48px;
+  }
+
+  .role-card {
+    padding: 36px 28px;
+    border: 1px solid rgba(255,255,255,0.06);
+    background: var(--dark2);
+    transition: all 0.4s ease;
+  }
+
+  .role-card:hover {
+    border-color: rgba(201,168,76,0.3);
+    background: var(--dark3);
+  }
+
+  .role-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.3rem;
+    font-weight: 400;
+    color: var(--gold-light);
+    margin-bottom: 12px;
+  }
+
+  .role-desc {
+    font-size: 0.82rem;
+    line-height: 1.8;
+    color: var(--white-dim);
+  }
+
+  /* RULES */
+  .rules-list {
+    list-style: none;
+    margin-top: 36px;
+  }
+
+  .rules-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 20px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 0.88rem;
+    line-height: 1.7;
+    color: var(--white-dim);
+    transition: color 0.3s ease;
+  }
+
+  .rules-list li:hover { color: var(--white); }
+
+  .rules-list li .num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.3rem;
+    color: var(--gold-dim);
+    min-width: 28px;
+    line-height: 1;
+  }
+
+  /* RECOGNITION */
+  .recognition-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2px;
+    margin-top: 48px;
+  }
+
+  @media (max-width: 600px) {
+    .recognition-grid { grid-template-columns: 1fr; }
+  }
+
+  .rec-card {
+    padding: 44px 32px;
+    background: var(--dark2);
+    border: 1px solid rgba(255,255,255,0.04);
+    text-align: center;
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .rec-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 100%; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  .rec-card:hover::after { opacity: 1; }
+  .rec-card:hover { background: var(--dark3); }
+
+  .rec-icon { font-size: 2.5rem; margin-bottom: 16px; display: block; }
+
+  .rec-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: var(--gold-light);
+    margin-bottom: 8px;
+  }
+
+  .rec-desc {
+    font-size: 0.78rem;
+    line-height: 1.7;
+    color: var(--white-dim);
+  }
+
+  /* QUOTE SECTION */
+  .quote-section {
+    background: var(--dark2);
+    border-top: 1px solid rgba(201,168,76,0.15);
+    border-bottom: 1px solid rgba(201,168,76,0.15);
+    text-align: center;
+    padding: 100px 24px;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+  }
+
+  .quote-section::before {
+    content: '♛';
+    position: absolute;
+    font-size: 20rem;
+    color: rgba(201,168,76,0.03);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    user-select: none;
+  }
+
+  .quote-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.6rem, 4vw, 2.8rem);
+    font-weight: 300;
+    font-style: italic;
+    line-height: 1.4;
+    color: var(--white);
+    max-width: 780px;
+    margin: 0 auto 24px;
+  }
+
+  .quote-text strong {
+    color: var(--gold);
+    font-style: normal;
+    font-weight: 400;
+  }
+
+  .quote-attr {
+    font-size: 0.65rem;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 60px 24px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .footer-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.8rem;
+    font-weight: 300;
+    color: var(--gold);
+    margin-bottom: 12px;
+  }
+
+  .footer-sub {
+    font-size: 0.65rem;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--white-dim);
+    opacity: 0.5;
+    margin-bottom: 32px;
+  }
+
+  .footer-hr {
+    width: 60px;
+    height: 1px;
+    background: rgba(201,168,76,0.3);
+    margin: 0 auto;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(180deg, rgba(10,10,10,0.9) 0%, transparent 100%);
+    backdrop-filter: blur(8px);
+  }
+
+  .nav-brand {
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--white-dim);
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .nav-links a:hover { color: var(--gold); }
+
+  @media (max-width: 640px) {
+    .nav-links { display: none; }
+    nav { padding: 16px 24px; }
+  }
+
+  /* INTERSECTION OBSERVER ANIMATIONS */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .reveal-delay-1 { transition-delay: 0.1s; }
+  .reveal-delay-2 { transition-delay: 0.2s; }
+  .reveal-delay-3 { transition-delay: 0.3s; }
+  .reveal-delay-4 { transition-delay: 0.4s; }
+</style>
+</head>
+<body>
+
+<div class="chess-bg"></div>
+
+<nav>
+  <div class="nav-brand">♟ Steel Chess Tour</div>
+  <ul class="nav-links">
+    <li><a href="#presentacion">Presentación</a></li>
+    <li><a href="#objetivos">Objetivos</a></li>
+    <li><a href="#organizacion">Organización</a></li>
+    <li><a href="#reglamento">Reglamento</a></li>
+    <li><a href="#reconocimiento">Reconocimiento</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <span class="hero-piece">♔</span>
+  <span class="hero-piece">♕</span>
+  <span class="hero-piece">♖</span>
+  <span class="hero-piece">♗</span>
+  <span class="hero-piece">♘</span>
+
+  <p class="eyebrow">Torneo Pre Deportivo Formativo</p>
+  <h1 class="hero-title">
+    Steel Learning
+    <span>Chess Tour</span>
+  </h1>
+  <div class="hero-divider"></div>
+  <p class="hero-subtitle">Manual Oficial del Torneo</p>
+  <div class="hero-badges">
+    <span class="badge">Sistema Suizo</span>
+    <span class="badge">4–5 Rondas</span>
+    <span class="badge">10–15 min / jugador</span>
+    <span class="badge">Categoría Formativa</span>
+  </div>
+
+  <div class="scroll-hint">
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<hr class="hr-gold">
+
+<!-- PRESENTACIÓN -->
+<section id="presentacion">
+  <div class="container">
+    <p class="section-label reveal">01 — Presentación</p>
+    <h2 class="section-title reveal">Un espacio <em>pedagógico</em><br>más allá de la competencia</h2>
+    <p class="prose reveal">El Steel Learning Chess Tour nace como una iniciativa formativa orientada al fortalecimiento del pensamiento estratégico y el desarrollo integral de los participantes a través del ajedrez. Este torneo no se concibe únicamente como una competencia, sino como un espacio pedagógico donde el aprendizaje, la reflexión y el crecimiento personal son los pilares fundamentales.</p>
+    <p class="prose reveal">El ajedrez es reconocido mundialmente como una disciplina que estimula habilidades cognitivas superiores tales como la concentración, la memoria, el análisis lógico, la toma de decisiones y la resolución de problemas. El torneo se desarrolla bajo un enfoque pre deportivo, en el cual se prioriza el proceso de formación antes que el resultado competitivo.</p>
+    <p class="prose reveal">El Steel Learning Chess Tour busca crear un ambiente estructurado, respetuoso y motivador donde cada participante tenga la oportunidad de poner en práctica sus conocimientos, aprender de sus errores y fortalecer su carácter deportivo.</p>
+  </div>
+</section>
+
+<hr class="hr-gold">
+
+<!-- JUSTIFICACIÓN -->
+<section>
+  <div class="container">
+    <p class="section-label reveal">02 — Justificación</p>
+    <h2 class="section-title reveal">El ajedrez como<br><em>herramienta educativa</em></h2>
+    <p class="prose reveal">La implementación de un torneo formativo de ajedrez responde a la necesidad de generar espacios que promuevan el desarrollo intelectual y socioemocional. En la etapa pre deportiva, es fundamental que los jóvenes comprendan que la competencia no solo implica ganar o perder, sino aprender, mejorar y respetar al oponente.</p>
+
+    <ul class="skills-list">
+      <li class="reveal reveal-delay-1">Mejorar la capacidad de concentración</li>
+      <li class="reveal reveal-delay-2">Desarrollar el pensamiento crítico</li>
+      <li class="reveal reveal-delay-3">Fomentar la paciencia y el autocontrol</li>
+      <li class="reveal reveal-delay-4">Fortalecer la planificación estratégica</li>
+      <li class="reveal reveal-delay-1">Incentivar el respeto por las normas</li>
+      <li class="reveal reveal-delay-2">Promover el juego limpio</li>
+    </ul>
+  </div>
+</section>
+
+<hr class="hr-gold">
+
+<!-- OBJETIVOS -->
+<section id="objetivos">
+  <div class="container">
+    <p class="section-label reveal">03 — Objetivos</p>
+    <h2 class="section-title reveal">Desarrollo <em>integral</em><br>en cada partida</h2>
+    <p class="prose reveal">Fomentar el aprendizaje y el desarrollo del pensamiento estratégico mediante la organización de un torneo pre deportivo de ajedrez que promueva la formación integral de los participantes.</p>
+
+    <div class="obj-grid">
+      <div class="obj-card reveal reveal-delay-1">
+        <span class="obj-icon">⚖️</span>
+        <p>Aplicar correctamente las reglas oficiales básicas del ajedrez.</p>
+      </div>
+      <div class="obj-card reveal reveal-delay-2">
+        <span class="obj-icon">🧠</span>
+        <p>Desarrollar habilidades de análisis y planificación de jugadas.</p>
+      </div>
+      <div class="obj-card reveal reveal-delay-3">
+        <span class="obj-icon">🤝</span>
+        <p>Promover el respeto, la honestidad y el juego limpio.</p>
+      </div>
+      <div class="obj-card reveal reveal-delay-1">
+        <span class="obj-icon">💡</span>
+        <p>Estimular la autoconfianza y la toma de decisiones responsables.</p>
+      </div>
+      <div class="obj-card reveal reveal-delay-2">
+        <span class="obj-icon">♟️</span>
+        <p>Generar interés por la práctica continua del ajedrez como disciplina formativa.</p>
+      </div>
+      <div class="obj-card reveal reveal-delay-3">
+        <span class="obj-icon">📚</span>
+        <p>Valorar cada partida como una oportunidad de crecimiento y reflexión.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="hr-gold">
+
+<!-- ENFOQUE METODOLÓGICO -->
+<section>
+  <div class="container">
+    <p class="section-label reveal">04 — Enfoque Metodológico</p>
+    <h2 class="section-title reveal">La competencia como<br><em>experiencia educativa</em></h2>
+    <p class="prose reveal">El Steel Learning Chess Tour se desarrolla bajo un enfoque pedagógico formativo. Más allá del resultado, se valorará la actitud, el esfuerzo, la estrategia aplicada y la capacidad de reflexión posterior.</p>
+    <p class="prose reveal">El torneo incluirá momentos de retroalimentación donde los participantes podrán analizar jugadas, identificar errores comunes y reforzar conceptos estratégicos básicos. De esta manera, la competencia se convierte en una experiencia educativa estructurada.</p>
+  </div>
+</section>
+
+<hr class="hr-gold">
+
+<!-- ORGANIZACIÓN -->
+<section id="organizacion">
+  <div class="container">
+    <p class="section-label reveal">05 — Organización del Evento</p>
+    <h2 class="section-title reveal">Datos <em>técnicos</em><br>del torneo</h2>
+
+    <div class="info-row">
+      <div class="info-card reveal reveal-delay-1">
+        <span class="value">Suizo</span>
+        <span class="label">Sistema de juego</span>
+      </div>
+      <div class="info-card reveal reveal-delay-2">
+        <span class="value">4–5</span>
+        <span class="label">Rondas</span>
+      </div>
+      <div class="info-card reveal reveal-delay-3">
+        <span class="value">15'</span>
+        <span class="label">Tiempo por jugador</span>
+      </div>
+      <div class="info-card reveal reveal-delay-4">
+        <span class="value">Pre-D</span>
+        <span class="label">Categoría</span>
+      </div>
+    </div>
+
+    <p class="prose reveal" style="margin-top: 40px;">El sistema suizo permite que todos los participantes jueguen varias partidas, garantizando mayor experiencia y práctica sin eliminación directa. Esto fortalece el enfoque de aprendizaje continuo.</p>
+  </div>
+</section>
+
+<hr class="hr-gold">
+
+<!-- ROLES -->
+<section>
+  <div class="container">
+    <p class="section-label reveal">06 — Roles y Responsabilidades</p>
+    <h2 class="section-title reveal">Equipo<br><em>organizador</em></h2>
+
+    <div class="roles-grid">
+      <div class="role-card reveal reveal-delay-1">
+        <div class="role-title">♔ Director General</div>
+        <p class="role-desc">Responsable de la coordinación general, supervisión del cronograma y resolución de situaciones organizativas.</p>
+      </div>
+      <div class="role-card reveal reveal-delay-2">
+        <div class="role-title">⚖️ Árbitro</div>
+        <p class="role-desc">Encargado de velar por el cumplimiento de las reglas y resolver dudas durante el desarrollo de las partidas.</p>
+      </div>
+      <div class="role-card reveal reveal-delay-3">
+        <div class="role-title">📊 Registro y Resultados</div>
+        <p class="role-desc">Lleva el control de puntajes, emparejamientos y actualización de tablas durante el torneo.</p>
+      </div>
+      <div class="role-card reveal reveal-delay-4">
+        <div class="role-title">🏗️ Logística</div>
+        <p class="role-desc">Organiza el espacio físico, materiales de juego, tableros y la gestión de tiempos del evento.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="hr-gold">
+
+<!-- REGLAMENTO -->
+<section id="reglamento">
+  <div class="container">
+    <p class="section-label reveal">07 — Reglamento General</p>
+    <h2 class="section-title reveal">Normas para un<br><em>ambiente ideal</em></h2>
+
+    <ol class="rules-list">
+      <li class="reveal"><span class="num">01</span> Respeto absoluto entre los jugadores en todo momento.</li>
+      <li class="reveal"><span class="num">02</span> Silencio durante el desarrollo de las partidas.</li>
+      <li class="reveal"><span class="num">03</span> Prohibido el uso de dispositivos electrónicos durante las rondas.</li>
+      <li class="reveal"><span class="num">04</span> Regla de "pieza tocada, pieza movida" — en vigor en todo momento.</li>
+      <li class="reveal"><span class="num">05</span> Las decisiones del árbitro serán definitivas e inapelables.</li>
+      <li class="reveal"><span class="num">06</span> Se promoverá el juego limpio en todo momento.</li>
+      <li class="reveal"><span class="num">07</span> El incumplimiento de normas podrá generar advertencias formativas, priorizando siempre la orientación pedagógica.</li>
+    </ol>
+  </div>
+</section>
+
+<hr class="hr-gold">
+
+<!-- RECONOCIMIENTO -->
+<section id="reconocimiento">
+  <div class="container">
+    <p class="section-label reveal">08 — Sistema de Reconocimiento</p>
+    <h2 class="section-title reveal">Más allá del<br><em>primer lugar</em></h2>
+    <p class="prose reveal">En coherencia con el enfoque formativo, la premiación no se limitará únicamente al mejor puntaje. Se reconocerán diferentes dimensiones del aprendizaje y el crecimiento personal.</p>
+
+    <div class="recognition-grid">
+      <div class="rec-card reveal reveal-delay-1">
+        <span class="rec-icon">🏆</span>
+        <div class="rec-title">Mejor Desempeño General</div>
+        <p class="rec-desc">Reconocimiento al jugador con el mejor resultado acumulado a lo largo de todas las rondas.</p>
+      </div>
+      <div class="rec-card reveal reveal-delay-2">
+        <span class="rec-icon">♟️</span>
+        <div class="rec-title">Jugador más Estratégico</div>
+        <p class="rec-desc">Distinción al participante que demuestra mayor profundidad en su pensamiento durante las partidas.</p>
+      </div>
+      <div class="rec-card reveal reveal-delay-3">
+        <span class="rec-icon">🤝</span>
+        <div class="rec-title">Mejor Actitud Deportiva</div>
+        <p class="rec-desc">Premio al jugador que mejor representa los valores del juego limpio, el respeto y la camaradería.</p>
+      </div>
+      <div class="rec-card reveal reveal-delay-4">
+        <span class="rec-icon">📈</span>
+        <div class="rec-title">Mayor Progreso</div>
+        <p class="rec-desc">Reconocimiento especial al participante que mayor evolución y aprendizaje demuestre durante el torneo.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- QUOTE CENTRAL -->
+<div class="quote-section">
+  <p class="quote-text">"Competir es importante, pero <strong>aprender y mejorar</strong> es esencial."</p>
+  <p class="quote-attr">— Steel Learning Chess Tour</p>
+</div>
+
+<!-- IMPACTO Y CONCLUSIÓN -->
+<section>
+  <div class="container">
+    <p class="section-label reveal">09 — Impacto Esperado</p>
+    <h2 class="section-title reveal">Un precedente<br><em>formativo</em></h2>
+    <p class="prose reveal">Se espera que el Steel Learning Chess Tour contribuya al fortalecimiento de habilidades cognitivas y sociales en los participantes, promoviendo la disciplina, la concentración y la confianza en sus capacidades estratégicas.</p>
+    <p class="prose reveal">Asimismo, el torneo puede convertirse en un precedente para futuras ediciones, consolidándose como un espacio formativo que impulse el desarrollo del ajedrez dentro de la comunidad educativa o institucional.</p>
+
+    <div style="margin-top: 60px; border: 1px solid rgba(201,168,76,0.2); padding: 48px 40px; background: rgba(201,168,76,0.02);" class="reveal">
+      <p class="section-label" style="margin-bottom: 20px;">10 — Conclusión</p>
+      <p style="font-family: 'Cormorant Garamond', serif; font-size: 1.35rem; font-weight: 300; line-height: 1.8; color: var(--white); font-style: italic;">
+        El Steel Learning Chess Tour no es simplemente un evento competitivo; es una experiencia de formación estratégica. A través de la organización, el liderazgo y el compromiso de los participantes, este torneo busca demostrar que el ajedrez es una herramienta poderosa para el crecimiento intelectual y personal.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">♟ Steel Learning Chess Tour</div>
+  <div class="footer-sub">Manual Oficial — Torneo Pre Deportivo Formativo</div>
+  <div class="footer-hr"></div>
+</footer>
+
+<script>
+  // Reveal on scroll
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+  reveals.forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
